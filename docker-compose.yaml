@@ -45,6 +45,7 @@ services:
       - GIT_USER_EMAIL
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent1
+      - AGENT_NICKNAME=${AGENT1_NICKNAME:-agent1}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
@@ -68,6 +69,7 @@ services:
       - GIT_USER_EMAIL
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent2
+      - AGENT_NICKNAME=${AGENT2_NICKNAME:-agent2}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
@@ -79,20 +81,19 @@ services:
       - "5002:5000"
 
   # ============================================
-  # Agent 3 (extended profile)
+  # Agent 3
   # ============================================
   agent3:
     <<: *agent-common
     container_name: claude-agent-3
     hostname: agent3
-    profiles:
-      - extended
     environment:
       - TZ=${TZ:-America/New_York}
       - GIT_USER_NAME
       - GIT_USER_EMAIL
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent3
+      - AGENT_NICKNAME=${AGENT3_NICKNAME:-agent3}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
@@ -104,20 +105,19 @@ services:
       - "5003:5000"
 
   # ============================================
-  # Agent 4 (extended profile)
+  # Agent 4
   # ============================================
   agent4:
     <<: *agent-common
     container_name: claude-agent-4
     hostname: agent4
-    profiles:
-      - extended
     environment:
       - TZ=${TZ:-America/New_York}
       - GIT_USER_NAME
       - GIT_USER_EMAIL
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent4
+      - AGENT_NICKNAME=${AGENT4_NICKNAME:-agent4}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
