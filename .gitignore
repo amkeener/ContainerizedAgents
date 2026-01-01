@@ -1,0 +1,27 @@
+# Environment and credentials
+.env
+*.env.local
+
+# Agent credentials and configs
+agents/*/config/*
+!agents/*/config/.gitkeep
+
+# Project files (each agent has its own)
+agents/*/projects/*
+!agents/*/projects/.gitkeep
+
+# Shared credentials
+shared/*
+!shared/.gitkeep
+
+# Docker
+*.log
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+.startup/

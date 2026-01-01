@@ -1,0 +1,135 @@
+# Docker Compose for running multiple Claude Code agent instances
+#
+# Usage:
+#   ./scripts/launch.sh agent1 --repo https://github.com/user/repo --prompt "Help me..."
+#   ./scripts/launch.sh agent2 --api-key sk-ant-xxx
+#
+# Direct docker-compose usage:
+#   docker compose up -d agent1 agent2
+#   docker compose exec agent1 zsh
+#   docker compose logs -f agent1
+
+# Common configuration
+x-agent-common: &agent-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  stdin_open: true
+  tty: true
+  restart: unless-stopped
+  volumes:
+    # Mount Docker socket (works with both Docker Desktop and Colima)
+    - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    - ./shared:/workspace/.claude:ro
+    # Mount SSH keys for git authentication
+    - ~/.ssh:/root/.ssh:ro
+  environment:
+    - TZ=${TZ:-America/New_York}
+    # These can be passed at runtime via launch.sh or docker-compose exec -e
+    - GIT_USER_NAME
+    - GIT_USER_EMAIL
+    - ANTHROPIC_API_KEY
+    - GITHUB_TOKEN
+
+services:
+  # ============================================
+  # Agent 1
+  # ============================================
+  agent1:
+    <<: *agent-common
+    container_name: claude-agent-1
+    hostname: agent1
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - ANTHROPIC_API_KEY
+      - AGENT_NAME=agent1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./shared:/workspace/.claude:ro
+      - ./agents/agent1/projects:/workspace/projects
+      - ./agents/agent1/config:/root/.claude
+    ports:
+      - "3001:3000"
+      - "8081:8080"
+      - "5001:5000"
+
+  # ============================================
+  # Agent 2
+  # ============================================
+  agent2:
+    <<: *agent-common
+    container_name: claude-agent-2
+    hostname: agent2
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - ANTHROPIC_API_KEY
+      - AGENT_NAME=agent2
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./shared:/workspace/.claude:ro
+      - ./agents/agent2/projects:/workspace/projects
+      - ./agents/agent2/config:/root/.claude
+    ports:
+      - "3002:3000"
+      - "8082:8080"
+      - "5002:5000"
+
+  # ============================================
+  # Agent 3 (extended profile)
+  # ============================================
+  agent3:
+    <<: *agent-common
+    container_name: claude-agent-3
+    hostname: agent3
+    profiles:
+      - extended
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - ANTHROPIC_API_KEY
+      - AGENT_NAME=agent3
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./shared:/workspace/.claude:ro
+      - ./agents/agent3/projects:/workspace/projects
+      - ./agents/agent3/config:/root/.claude
+    ports:
+      - "3003:3000"
+      - "8083:8080"
+      - "5003:5000"
+
+  # ============================================
+  # Agent 4 (extended profile)
+  # ============================================
+  agent4:
+    <<: *agent-common
+    container_name: claude-agent-4
+    hostname: agent4
+    profiles:
+      - extended
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - ANTHROPIC_API_KEY
+      - AGENT_NAME=agent4
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./shared:/workspace/.claude:ro
+      - ./agents/agent4/projects:/workspace/projects
+      - ./agents/agent4/config:/root/.claude
+    ports:
+      - "3004:3000"
+      - "8084:8080"
+      - "5004:5000"
+
+# Networks
+networks:
+  default:
+    name: claude-agents-network
+    driver: bridge
