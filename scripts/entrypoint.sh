@@ -30,6 +30,8 @@ if [ -d "$HOME/.ssh" ]; then
         sed -e '/UseKeychain/d' \
             -e '/AddKeysToAgent/d' \
             -e '/IgnoreUnknown/d' \
+            -e '/^[[:space:]]*Include.*\/Users\//d' \
+            -e '/^[[:space:]]*Include.*\.colima/d' \
             "$HOME/.ssh/config" > /tmp/.ssh-config/config
         chmod 600 /tmp/.ssh-config/config
     fi
@@ -43,6 +45,11 @@ if [ -d "$HOME/.ssh" ]; then
 
     # Set up SSH to use the Linux-compatible config
     export GIT_SSH_COMMAND="ssh -F /tmp/.ssh-config/config -o UserKnownHostsFile=/tmp/.ssh-config/known_hosts -o StrictHostKeyChecking=accept-new"
+
+    # Persist GIT_SSH_COMMAND for all sessions (avoid duplicates)
+    if ! grep -q "GIT_SSH_COMMAND" "$HOME/.bashrc" 2>/dev/null; then
+        echo "export GIT_SSH_COMMAND=\"$GIT_SSH_COMMAND\"" >> "$HOME/.bashrc"
+    fi
 
     echo "SSH keys mounted from host"
 fi
