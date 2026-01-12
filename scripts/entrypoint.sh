@@ -50,6 +50,9 @@ if [ -d "$HOME/.ssh" ]; then
     if ! grep -q "GIT_SSH_COMMAND" "$HOME/.bashrc" 2>/dev/null; then
         echo "export GIT_SSH_COMMAND=\"$GIT_SSH_COMMAND\"" >> "$HOME/.bashrc"
     fi
+    if ! grep -q "GIT_SSH_COMMAND" "$HOME/.zshrc" 2>/dev/null; then
+        echo "export GIT_SSH_COMMAND=\"$GIT_SSH_COMMAND\"" >> "$HOME/.zshrc"
+    fi
 
     echo "SSH keys mounted from host"
 fi
