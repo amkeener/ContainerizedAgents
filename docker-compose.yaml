@@ -17,12 +17,6 @@ x-agent-common: &agent-common
   stdin_open: true
   tty: true
   restart: unless-stopped
-  volumes:
-    # Mount Docker socket (works with both Docker Desktop and Colima)
-    - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock:ro
-    - ./shared:/workspace/.claude:ro
-    # Mount SSH keys for git authentication
-    - ~/.ssh:/home/agent/.ssh:ro
   environment:
     - TZ=${TZ:-America/New_York}
     # These can be passed at runtime via launch.sh or docker-compose exec -e
@@ -30,6 +24,8 @@ x-agent-common: &agent-common
     - GIT_USER_EMAIL
     - ANTHROPIC_API_KEY
     - GITHUB_TOKEN
+    # SSH agent forwarding (macOS Docker Desktop)
+    - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
 
 services:
   # ============================================
@@ -46,11 +42,15 @@ services:
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent1
       - AGENT_NICKNAME=${AGENT1_NICKNAME:-agent1}
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
       - ./agents/agent1/projects:/workspace/projects
       - ./agents/agent1/config:/home/agent/.claude
+      # SSH authentication
+      - ~/.ssh:/home/agent/.ssh:ro
+      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
     ports:
       - "3001:3000"
       - "8081:8080"
@@ -70,11 +70,15 @@ services:
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent2
       - AGENT_NICKNAME=${AGENT2_NICKNAME:-agent2}
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
       - ./agents/agent2/projects:/workspace/projects
       - ./agents/agent2/config:/home/agent/.claude
+      # SSH authentication
+      - ~/.ssh:/home/agent/.ssh:ro
+      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
     ports:
       - "3002:3000"
       - "8082:8080"
@@ -94,11 +98,15 @@ services:
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent3
       - AGENT_NICKNAME=${AGENT3_NICKNAME:-agent3}
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
       - ./agents/agent3/projects:/workspace/projects
       - ./agents/agent3/config:/home/agent/.claude
+      # SSH authentication
+      - ~/.ssh:/home/agent/.ssh:ro
+      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
     ports:
       - "3003:3000"
       - "8083:8080"
@@ -118,11 +126,15 @@ services:
       - ANTHROPIC_API_KEY
       - AGENT_NAME=agent4
       - AGENT_NICKNAME=${AGENT4_NICKNAME:-agent4}
+      - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
       - ./agents/agent4/projects:/workspace/projects
       - ./agents/agent4/config:/home/agent/.claude
+      # SSH authentication
+      - ~/.ssh:/home/agent/.ssh:ro
+      - /run/host-services/ssh-auth.sock:/run/host-services/ssh-auth.sock
     ports:
       - "3004:3000"
       - "8084:8080"

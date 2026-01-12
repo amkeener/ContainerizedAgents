@@ -17,10 +17,39 @@ if [ ! -w "$HOME/.claude" ] 2>/dev/null; then
 fi
 
 # ============================================
-# SSH Agent forwarding setup
+# SSH Setup
 # ============================================
-if [ -n "$SSH_AUTH_SOCK" ]; then
-    echo "SSH Agent detected, setting up forwarding..."
+# Fix SSH directory permissions (mounted read-only, but we need correct perms)
+if [ -d "$HOME/.ssh" ]; then
+    # Create a writable SSH config directory with correct permissions
+    mkdir -p /tmp/.ssh-config
+
+    # Copy SSH config if exists, stripping macOS-specific options
+    if [ -f "$HOME/.ssh/config" ]; then
+        # Remove macOS-specific options that break Linux
+        sed -e '/UseKeychain/d' \
+            -e '/AddKeysToAgent/d' \
+            -e '/IgnoreUnknown/d' \
+            "$HOME/.ssh/config" > /tmp/.ssh-config/config
+        chmod 600 /tmp/.ssh-config/config
+    fi
+
+    # Create known_hosts if it doesn't exist
+    touch /tmp/.ssh-config/known_hosts
+    chmod 600 /tmp/.ssh-config/known_hosts
+
+    # Add GitHub to known hosts
+    ssh-keyscan -t ed25519,rsa github.com >> /tmp/.ssh-config/known_hosts 2>/dev/null || true
+
+    # Set up SSH to use the Linux-compatible config
+    export GIT_SSH_COMMAND="ssh -F /tmp/.ssh-config/config -o UserKnownHostsFile=/tmp/.ssh-config/known_hosts -o StrictHostKeyChecking=accept-new"
+
+    echo "SSH keys mounted from host"
+fi
+
+# SSH Agent forwarding (macOS Docker Desktop)
+if [ -S "$SSH_AUTH_SOCK" ]; then
+    echo "SSH Agent forwarding enabled"
 fi
 
 # ============================================

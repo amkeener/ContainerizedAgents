@@ -1,0 +1,142 @@
+#!/bin/bash
+# Launch a Claude Code agent with SSH authentication
+#
+# Usage:
+#   ./launch agent1
+#   ./launch agent1 --repo git@github.com:user/repo.git
+#   ./launch agent1 --repo git@github.com:user/repo.git --prompt "Help me implement X"
+#   ./launch agent2 -d  # Detached mode
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Default values
+AGENT="agent1"
+REPO_URL=""
+PROMPT=""
+INTERACTIVE=true
+EXTRA_ARGS=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        agent1|agent2|agent3|agent4)
+            AGENT="$1"
+            shift
+            ;;
+        --repo)
+            REPO_URL="$2"
+            shift 2
+            ;;
+        --prompt|-p)
+            PROMPT="$2"
+            shift 2
+            ;;
+        --detach|-d)
+            INTERACTIVE=false
+            shift
+            ;;
+        --help|-h)
+            echo "Usage: $0 <agent> [options]"
+            echo ""
+            echo "Agents: agent1, agent2, agent3, agent4"
+            echo ""
+            echo "Options:"
+            echo "  --repo URL            Git repository to clone (SSH URLs work automatically)"
+            echo "  --prompt, -p TEXT     Starting prompt for Claude Code"
+            echo "  --detach, -d          Run in background"
+            echo "  --help, -h            Show this help"
+            echo ""
+            echo "SSH Authentication:"
+            echo "  Your ~/.ssh keys are automatically mounted into the container."
+            echo "  SSH agent forwarding is enabled for passphrase-protected keys."
+            echo "  Use git@github.com:user/repo.git URLs for SSH auth."
+            echo ""
+            echo "Examples:"
+            echo "  $0 agent1 --repo git@github.com:user/repo.git"
+            echo "  $0 agent1 --repo git@github.com:user/repo.git --prompt 'Fix the tests'"
+            echo "  $0 agent2 --detach"
+            echo ""
+            exit 0
+            ;;
+        *)
+            EXTRA_ARGS="$EXTRA_ARGS $1"
+            shift
+            ;;
+    esac
+done
+
+echo "============================================"
+echo "  Launching Claude Code Agent: $AGENT"
+echo "============================================"
+echo ""
+
+# Check SSH setup
+if [ -d "$HOME/.ssh" ]; then
+    echo "SSH: Keys from ~/.ssh will be available"
+    if [ -S "$SSH_AUTH_SOCK" ]; then
+        echo "SSH: Agent forwarding enabled"
+    fi
+else
+    echo "SSH: Warning - No ~/.ssh directory found"
+fi
+echo ""
+
+if [ -n "$REPO_URL" ]; then
+    echo "Repo: $REPO_URL"
+fi
+
+if [ -n "$PROMPT" ]; then
+    echo "Prompt: ${PROMPT:0:60}..."
+fi
+
+echo ""
+
+# Check if image exists, build if not
+if ! docker images | grep -q "containerizedagents"; then
+    echo "Building container image (first time setup)..."
+    docker compose build
+    echo ""
+fi
+
+# Start/restart the container
+echo "Starting container..."
+docker compose up -d "$AGENT"
+
+# Wait for container to be ready
+sleep 2
+
+# Execute in the container
+if [ "$INTERACTIVE" = true ]; then
+    docker compose exec \
+        -e REPO_URL="$REPO_URL" \
+        -e PROMPT="$PROMPT" \
+        "$AGENT" bash -c '
+            # Clone repo if specified
+            if [ -n "$REPO_URL" ]; then
+                REPO_NAME=$(basename "$REPO_URL" .git)
+                if [ ! -d "/workspace/projects/$REPO_NAME" ]; then
+                    echo "Cloning repository..."
+                    git clone "$REPO_URL" "/workspace/projects/$REPO_NAME"
+                fi
+                cd "/workspace/projects/$REPO_NAME"
+                echo ""
+                echo "Working in: $(pwd)"
+                echo ""
+            fi
+
+            # Start Claude Code
+            if [ -n "$PROMPT" ]; then
+                exec claude "$PROMPT"
+            else
+                exec claude
+            fi
+        '
+else
+    echo "Container started in detached mode."
+    echo ""
+    echo "Connect with: docker compose exec $AGENT bash"
+    echo "Run Claude:   docker compose exec $AGENT claude"
+fi

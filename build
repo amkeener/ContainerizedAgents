@@ -1,0 +1,52 @@
+#!/bin/bash
+# Build Claude Code agent containers with SSH support
+#
+# Usage:
+#   ./build              # Build all images
+#   ./build --no-cache   # Build without cache
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "============================================"
+echo "  Building Claude Code Agent Containers"
+echo "============================================"
+echo ""
+
+# Verify SSH keys exist
+if [ ! -d "$HOME/.ssh" ]; then
+    echo "Warning: No ~/.ssh directory found"
+    echo "SSH authentication will not be available in containers"
+    echo ""
+fi
+
+# Check for SSH agent (macOS)
+if [ -S "/run/host-services/ssh-auth.sock" ] 2>/dev/null || [ -n "$SSH_AUTH_SOCK" ]; then
+    echo "SSH agent detected - will be forwarded to containers"
+else
+    echo "Note: SSH agent not running. Start with: eval \$(ssh-agent) && ssh-add"
+fi
+echo ""
+
+# Check for --no-cache flag
+NO_CACHE=""
+if [ "$1" = "--no-cache" ]; then
+    NO_CACHE="--no-cache"
+    echo "Building without cache..."
+fi
+
+# Build the images
+docker compose build $NO_CACHE
+
+echo ""
+echo "Build complete!"
+echo ""
+echo "Your SSH keys will be automatically available in containers."
+echo ""
+echo "To launch an agent:"
+echo "  ./launch agent1"
+echo "  ./launch agent1 --repo git@github.com:user/repo.git"
+echo "  ./launch agent2 --repo git@github.com:user/repo.git --prompt 'Help me...'"
+echo ""
