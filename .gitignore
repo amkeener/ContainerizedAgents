@@ -13,6 +13,9 @@ agents/*/projects/*
 # Shared credentials
 shared/*
 !shared/.gitkeep
+!shared/agent-messages/
+shared/agent-messages/*
+!shared/agent-messages/.gitkeep
 
 # Docker
 *.log

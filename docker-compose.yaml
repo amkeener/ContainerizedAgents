@@ -26,6 +26,8 @@ x-agent-common: &agent-common
     - GITHUB_TOKEN
     # SSH agent forwarding (macOS Docker Desktop)
     - SSH_AUTH_SOCK=/run/host-services/ssh-auth.sock
+    # Inter-agent messaging directory (file-based IPC)
+    - AGENT_MESSAGES_DIR=/workspace/agent-messages
 
 services:
   # ============================================
@@ -46,6 +48,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
+      - ./shared/agent-messages:/workspace/agent-messages
       - ./agents/agent1/projects:/workspace/projects
       - ./agents/agent1/config:/home/agent/.claude
       # SSH authentication
@@ -74,6 +77,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
+      - ./shared/agent-messages:/workspace/agent-messages
       - ./agents/agent2/projects:/workspace/projects
       - ./agents/agent2/config:/home/agent/.claude
       # SSH authentication
@@ -102,6 +106,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
+      - ./shared/agent-messages:/workspace/agent-messages
       - ./agents/agent3/projects:/workspace/projects
       - ./agents/agent3/config:/home/agent/.claude
       # SSH authentication
@@ -130,6 +135,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./shared:/workspace/.claude:ro
+      - ./shared/agent-messages:/workspace/agent-messages
       - ./agents/agent4/projects:/workspace/projects
       - ./agents/agent4/config:/home/agent/.claude
       # SSH authentication
