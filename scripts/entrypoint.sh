@@ -86,6 +86,20 @@ fi
 # Create claude config directory if it doesn't exist
 mkdir -p "$HOME/.claude"
 
+# Disable auto-updates (container installs via npm global as root, updates should happen via image rebuild)
+CLAUDE_SETTINGS="$HOME/.claude/settings.json"
+if [ ! -f "$CLAUDE_SETTINGS" ]; then
+    echo '{"autoUpdaterStatus":"disabled"}' > "$CLAUDE_SETTINGS"
+elif ! grep -q '"autoUpdaterStatus"' "$CLAUDE_SETTINGS" 2>/dev/null; then
+    # Add autoUpdaterStatus to existing settings file
+    if [ -s "$CLAUDE_SETTINGS" ]; then
+        # File has content - merge the setting
+        jq '. + {"autoUpdaterStatus":"disabled"}' "$CLAUDE_SETTINGS" > "$CLAUDE_SETTINGS.tmp" && mv "$CLAUDE_SETTINGS.tmp" "$CLAUDE_SETTINGS"
+    else
+        echo '{"autoUpdaterStatus":"disabled"}' > "$CLAUDE_SETTINGS"
+    fi
+fi
+
 # Link shared claude config if mounted
 if [ -d "/workspace/.claude" ] && [ "$(ls -A /workspace/.claude 2>/dev/null)" ]; then
     echo "Linking shared Claude configuration..."
